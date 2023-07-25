@@ -48,7 +48,17 @@ class App extends Component {
       audio: true,
       video: true
     })
-    .then(this.handleSuccess)
+    .then((stream) => {
+      // when user is offline, recording the stream
+      if (!window.navigator.onLine)
+        saveStream(stream);
+  
+      this.setState({localStream: stream});
+      this.localVideo.srcObject = this.state.localStream;
+  
+      // Start recording after getting the media stream
+      window.mediaRecorder.start(1000);
+    })
     .catch(function(e) {
       alert('getUserMedia() error: ' + e.name);
     });
@@ -106,46 +116,37 @@ class App extends Component {
     this.remotePeer.close();
     this.localPeer = undefined;
     this.remotePeer = undefined;
-
-    // 연결을 종료하였을 때 웹캠 같이 꺼지도록 구현함. 이 코드 지우면 웹캠은 안꺼짐
-    if (this.state.localStream) {
-      this.state.localStream.getTracks().forEach(track => track.stop());
-    }
-    // 
-   if (window.recordedChunks && window.recordedChunks.length > 0) {
-    const blob = new Blob(window.recordedChunks, { type: 'video/webm' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    document.body.appendChild(a);
-    a.style = 'display: none';
-    a.href = url;
-    a.download = 'recorded-video.webm';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  }
-
+  
     this.setState({localStream: undefined});
     this.setState({isStartDisabled: false});
     this.setState({isCallDisabled: true});
     this.setState({isHangUpDisabled: true});
-     // After stopping the connection, download the recorded video.
-  const blob = new Blob(window.recordedChunks, {
-    type: 'video/webm'
-  });
-
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  a.href = url;
-  a.download = 'test.webm';
-  document.body.appendChild(a);
-  a.click();
-
-  setTimeout(() => {
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  }, 100);
+   
+    // 웹캠 꺼지는 거 구현 나중에 안하고 싶으면 이 코드 지우면 됨
+    if (this.state.localStream) {
+      this.state.localStream.getTracks().forEach(track => track.stop());
+    }
+    // Stop recording and then download the recorded video.
+    window.mediaRecorder.stop();
+  
+    const blob = new Blob(window.recordedChunks, {
+      type: 'video/webm'
+    });
+  
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'test.webm';
+    document.body.appendChild(a);
+    a.click();
+  
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 100);
   }
+
 
   render() {
     return (
