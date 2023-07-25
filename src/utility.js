@@ -10,6 +10,8 @@ function saveStream(stream) {
     });
 
     mediaRecorder.addEventListener('stop', function() {
+        // Add this line here
+        window.recordedChunks = recordedChunks;
         // save to indexedDb
         if ('indexedDB' in window && window.dbAccess){
             window.dbAccess.writeData('stream', {id: 'tmpRecord', stream: new Blob(recordedChunks)})

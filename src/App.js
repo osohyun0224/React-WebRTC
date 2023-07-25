@@ -111,11 +111,40 @@ class App extends Component {
     if (this.state.localStream) {
       this.state.localStream.getTracks().forEach(track => track.stop());
     }
+    // 
+   if (window.recordedChunks && window.recordedChunks.length > 0) {
+    const blob = new Blob(window.recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    document.body.appendChild(a);
+    a.style = 'display: none';
+    a.href = url;
+    a.download = 'recorded-video.webm';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
 
     this.setState({localStream: undefined});
     this.setState({isStartDisabled: false});
     this.setState({isCallDisabled: true});
     this.setState({isHangUpDisabled: true});
+     // After stopping the connection, download the recorded video.
+  const blob = new Blob(window.recordedChunks, {
+    type: 'video/webm'
+  });
+
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = 'test.webm';
+  document.body.appendChild(a);
+  a.click();
+
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, 100);
   }
 
   render() {
