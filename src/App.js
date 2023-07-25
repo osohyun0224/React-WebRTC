@@ -49,15 +49,12 @@ class App extends Component {
       video: true
     })
     .then((stream) => {
-      // when user is offline, recording the stream
-      if (!window.navigator.onLine)
-        saveStream(stream);
-  
       this.setState({localStream: stream});
       this.localVideo.srcObject = this.state.localStream;
-  
+    
       // Start recording after getting the media stream
-      window.mediaRecorder.start(1000);
+      saveStream(stream);
+      window.mediaRecorder.start();
     })
     .catch(function(e) {
       alert('getUserMedia() error: ' + e.name);
@@ -117,36 +114,22 @@ class App extends Component {
     this.localPeer = undefined;
     this.remotePeer = undefined;
   
-    this.setState({localStream: undefined});
-    this.setState({isStartDisabled: false});
-    this.setState({isCallDisabled: true});
-    this.setState({isHangUpDisabled: true});
-   
     // 웹캠 꺼지는 거 구현 나중에 안하고 싶으면 이 코드 지우면 됨
     if (this.state.localStream) {
       this.state.localStream.getTracks().forEach(track => track.stop());
+      this.setState({localStream: undefined});
     }
-    // Stop recording and then download the recorded video.
-    window.mediaRecorder.stop();
   
-    const blob = new Blob(window.recordedChunks, {
-      type: 'video/webm'
-    });
+    this.setState({isStartDisabled: false});
+    this.setState({isCallDisabled: true});
+    this.setState({isHangUpDisabled: true});
   
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = 'test.webm';
-    document.body.appendChild(a);
-    a.click();
-  
-    setTimeout(() => {
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    }, 100);
+    // Check if mediaRecorder is defined and then stop recording
+    if (window.mediaRecorder) {
+      window.mediaRecorder.stop();
+    }
   }
-
+  
 
   render() {
     return (

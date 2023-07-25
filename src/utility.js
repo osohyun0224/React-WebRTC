@@ -10,20 +10,23 @@ function saveStream(stream) {
     });
   
     window.mediaRecorder.addEventListener('stop', function() {
-        // save to indexedDb
-        if ('indexedDB' in window && window.dbAccess){
-            window.dbAccess.writeData('stream', {id: 'tmpRecord', stream: new Blob(window.recordedChunks)})
-            .then(() => {
-                // trigger sw's sync event
-                if('serviceWorker' in navigator && 'SyncManager' in window){
-                    navigator.serviceWorker.ready.then(function(swRegistration) {
-                        swRegistration.sync.register('save-stream');
-                    });
-                }
-            });
-        }
+      const blob = new Blob(window.recordedChunks, {
+        type: 'video/webm'
+      });
+  
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = '녹화영상.webm';
+      document.body.appendChild(a);
+      a.click();
+  
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
     });
   }
   
   export {saveStream};
-  
