@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import {saveStream} from './utility';
 
@@ -124,8 +123,23 @@ class App extends Component {
     this.setState({isCallDisabled: true});
     this.setState({isHangUpDisabled: true});
   
-    // Check if mediaRecorder is defined and then stop recording
+    // 바이너리 형식으로 백엔드에게 넘기기 위해 타입 변환
     if (window.mediaRecorder) {
+      window.mediaRecorder.addEventListener('dataavailable', event => {
+        const videoBlob = new Blob([event.data], { type: 'video/mp4' });
+        
+        const formData = new FormData();
+        formData.append('file', videoBlob, 'recordedVideo.mp4');
+        
+        fetch('', {
+          method: 'POST',
+          body: formData,
+        })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error(error));
+      });
+  
       window.mediaRecorder.stop();
     }
   }
