@@ -123,27 +123,37 @@ class App extends Component {
     this.setState({isCallDisabled: true});
     this.setState({isHangUpDisabled: true});
   
-    // 바이너리 형식으로 백엔드에게 넘기기 위해 타입 변환
-    if (window.mediaRecorder) {
-      window.mediaRecorder.addEventListener('dataavailable', event => {
-        const videoBlob = new Blob([event.data], { type: 'video/mp4' });
-        
-        const formData = new FormData();
-        formData.append('file', videoBlob, 'recordedVideo.mp4');
-        
-        fetch('', {
-          method: 'POST',
-          body: formData,
-        })
-        .then(response => response.json())
-        .then(data => console.log(data))
-        .catch(error => console.error(error));
-      });
-  
-      window.mediaRecorder.stop();
-    }
+  // 바이너리 형식으로 백엔드에게 보내주기 위해
+  if (window.mediaRecorder) {
+    window.mediaRecorder.addEventListener('dataavailable', event => {
+      const videoBlob = new Blob([event.data], { type: 'video/mp4' });
+      
+      const downloadLink = document.createElement('a');
+      downloadLink.href = URL.createObjectURL(videoBlob);
+      downloadLink.download = 'recordedVideo.mp4';
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      
+    
+      const formData = new FormData();
+      formData.append('file', videoBlob, 'recordedVideo.mp4');
+
+      // 백엔드 연결 테스트 해볼때 확인 가능
+      /*
+      fetch('https://your-backend-url.com/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      .then(response => response.json())
+      .then(data => console.log(data))
+      .catch(error => console.error(error));
+      */
+    });
+
+    window.mediaRecorder.stop();
   }
-  
+}
 
   render() {
     return (
