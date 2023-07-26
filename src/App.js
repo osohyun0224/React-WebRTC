@@ -141,7 +141,7 @@ class App extends Component {
 
       // 백엔드 연결 테스트 해볼때 확인 가능
       /*
-      fetch('https://your-backend-url.com/upload', {
+      fetch('백엔드 url (여기서는 firebase 이지만 ,,, 통신개념이 아니라 무의미함. ', {
         method: 'POST',
         body: formData,
       })
