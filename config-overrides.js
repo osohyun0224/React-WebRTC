@@ -1,9 +1,17 @@
+const { override, addBabelPlugin, addWebpackAlias } = require('customize-cra');
 const path = require('path');
-const { override, babelInclude } = require('react-app-rewired');
 
 module.exports = override(
-    babelInclude([
-        path.resolve('src'), // Make sure you link your own source
-        path.resolve('node_modules/engine.io-parser'), // Add the package here
-    ]),
+  addBabelPlugin([
+    'module-resolver',
+    {
+      root: ['node_modules/engine.io-parser'],
+      alias: {
+        'engine.io-parser': 'node_modules/engine.io-parser/build/esm/index.js'
+      }
+    }
+  ]),
+  addWebpackAlias({
+    'engine.io-parser': path.resolve('node_modules/engine.io-parser/build/esm/index.js')
+  })
 );
