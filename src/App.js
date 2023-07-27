@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 import {saveStream} from './utility';
+import {io} from "socket.io-client";
 
 class App extends Component {
   localPeer;
@@ -12,7 +13,10 @@ class App extends Component {
   }
 
   componentDidMount() {
-   
+    this.socket = io("http://localhost:3000");
+    this.socket.on("offer", this.handleOffer);
+    this.socket.on("answer", this.handleAnswer);
+    this.socket.on("candidate", this.handleCandidate);
   }
   
   // 로컬 피어와 원격 피어의 피어 연결을 초기화한다. 각 피어에 'icecandidate' 이벤트 리스너를 추가하며, 이는 인터넷 연결성을 협상하는 데 사용된다. 원격 피어에 스트림이 추가되면 원격 비디오의 srcObject를 해당 스트림으로 설정한다.
