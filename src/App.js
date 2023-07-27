@@ -18,6 +18,28 @@ class App extends Component {
     this.socket.on("answer", this.handleAnswer);
     this.socket.on("candidate", this.handleCandidate);
   }
+  /* 아래부터는 핸들러이다. 핸들러들은 Socket.IO를 통해 오는 메시지를 처리하고, 웹RTC 피어 연결을 설정하고 유지하기 위해 필요한 작업을 수행한다. 
+  이는 웹RTC 연결 설정의 기본적인 부분으로, SDP와 ICE 후보 정보를 교환하여 두 피어가 서로 통신할 수 있도록 하기에 꼭 필요한 핸들러 들만 구현했다. */
+
+  /* offer 이벤트가 서버로부터 클라이언트에 도착할 때 호출된다. offer는 원격 피어에 의해 생성되고나서 이 offer를 통해 로칼 피어는
+  원격 피어와 통신하기 위해 응답을 생성하는 기능을 한다. 
+  정리해보면 원격 치어의 SDP를 설정하고나서 해당 응답을 생성하기 위해 createAnswer 메소드를 호출한다. 
+  문제생기면 오류를 처리하도록 함수를 지정해두었다.*/ 
+  handleOffer = (offer) => {
+    this.remotePeer.setRemoteDescription(offer);
+    this.remotePeer.createAnswer()
+      .then(this.createdAnswer)
+      .catch(this.setSessionDescriptionError);
+  }
+  /* answer 이벤트가 서버로부터 클라이언트에 도착할 때 호출된다. 이 이벤트는 원격의 피어가 offer 메세지에 메세지에 응답했음을 알 수 있고 로컬 피어의 sdp를 설정하는데 사용된다. */
+  handleAnswer = (answer) => {
+    this.localPeer.setRemoteDescription(answer);
+  }
+  /* candidate 이벤트가 서버로부터 클라이언트에 도착할때 호출된다. ice 후보자는 네트워크를 통해 두 피어간의 데이터를 전송하는 방법을 나타낸다. 이 이벤트는 새로운 ice 후보가 생성된걸 알려주고 이 후보를 원격 피어에 추가한다. */
+  handleCandidate = (candidate) => {
+    const iceCandidate = new RTCIceCandidate(candidate);
+    this.remotePeer.addIceCandidate(iceCandidate);
+  }
   
   // 로컬 피어와 원격 피어의 피어 연결을 초기화한다. 각 피어에 'icecandidate' 이벤트 리스너를 추가하며, 이는 인터넷 연결성을 협상하는 데 사용된다. 원격 피어에 스트림이 추가되면 원격 비디오의 srcObject를 해당 스트림으로 설정한다.
   initPeerConnection = () =>{
