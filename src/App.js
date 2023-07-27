@@ -96,43 +96,46 @@ class App extends Component {
     this.localVideo.srcObject = this.state.localStream;
   }
 // 사용자가 의사와의 연결을 눌렀을 때 호출되며 피어 연결을 초기화하고 로컬 스트림을 로컬 피어에 추가한 다음 피어 연결에 대한 제안을 생성하는 기능을 한다.
-  handleCallClick = () => {
-    this.setState({isCallDisabled: true});
-    this.setState({isHangUpDisabled: false});
+handleCallClick = () => {
+  this.setState({isCallDisabled: true});
+  this.setState({isHangUpDisabled: false});
 
-    this.initPeerConnection();
-    this.localPeer.addStream(this.state.localStream);
+  this.initPeerConnection();
+  this.localPeer.addStream(this.state.localStream);
 
-    const offerOptions = {
-      offerToReceiveAudio: 1,
-      offerToReceiveVideo: 1
-    };
+  const offerOptions = {
+    offerToReceiveAudio: 1,
+    offerToReceiveVideo: 1
+  };
+  //webRTC 연결에서 사용되는 SDP (Session Description Protocol) 형식의 Offer를 생성한다.
+  this.localPeer.createOffer(offerOptions)
+  .then((description) => { //생성된 Offer를 로컬 피어의 로컬 설명으로 설정하기 위한 것임
+    this.socket.emit("offer", description);
+    this.createdOffer(description);
+  })
+  //에러 발생 시 에러를 다루도록 뺌
+  .catch(this.setSessionDescriptionError);
+}
 
-    this.localPeer.createOffer(offerOptions)
-    .then(this.createdOffer).catch(this.setSessionDescriptionError);
+createdOffer = (description) => {
+  this.localPeer.setLocalDescription(description);
+}
+  
+createdAnswer = (description) => {
+  this.remotePeer.setLocalDescription(description);
+  this.socket.emit("answer", description);
+}
+  
+handleConnection = (event) => {
+  const iceCandidate = event.candidate;
+    
+  if (iceCandidate) {
+    const newIceCandidate = new RTCIceCandidate(iceCandidate);
+    this.socket.emit("candidate", newIceCandidate);
   }
-// 제안이 성공적으로 호출 된 경우에 호출되며, 로컬 피어와 원격피어의 세션 설명을 설정하고 원격 피어에 대한 응답을 생성한다.
-  createdOffer = (description) => {
-    this.localPeer.setLocalDescription(description);
-    this.remotePeer.setRemoteDescription(description);
+}
 
-    this.remotePeer.createAnswer()
-      .then(this.createdAnswer)
-      .catch(this.setSessionDescriptionError);
-  }
-// 원격피어가 응답을 성공적으로 생성한 후에 호출된다. 원격 피어와 로컬 피어의 세션 설명을 설정한다.
-  createdAnswer = (description) => {
-    this.remotePeer.setLocalDescription(description);
-    this.localPeer.setRemoteDescription(description);
-  }
 
-  setSessionDescriptionError(error) {
-    console.log(error.toString());
-  }
-
-  getOtherPeer(pc) {
-    return (pc === this.localPeer) ? this.remotePeer : this.localPeer;
-  }
 // 사용자가 연결 종료를 눌렀을 때 호출되며 피어 연결을 종료하고 로컬 스트림이 있는 경우에 해당 스트림을 종료한다. 또한 녹화된 비디오를 mp4형식의 **blob**으로 다운로드 링크를 생성하고 폼 데이터에 추가해줌
   handleStopClick = () => {
     this.localPeer.close();
