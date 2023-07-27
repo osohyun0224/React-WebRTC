@@ -14,7 +14,8 @@ class App extends Component {
   componentDidMount() {
    
   }
-
+  
+  // 로컬 피어와 원격 피어의 피어 연결을 초기화한다. 각 피어에 'icecandidate' 이벤트 리스너를 추가하며, 이는 인터넷 연결성을 협상하는 데 사용된다. 원격 피어에 스트림이 추가되면 원격 비디오의 srcObject를 해당 스트림으로 설정한다.
   initPeerConnection = () =>{
     this.localPeer = new RTCPeerConnection(null);
     this.localPeer.addEventListener('icecandidate', this.handleConnection);
@@ -22,7 +23,7 @@ class App extends Component {
     this.remotePeer.addEventListener('icecandidate', this.handleConnection);
     this.remotePeer.onaddstream = (e) => this.remoteVideo.srcObject = e.stream;
   }
-
+// 'icecandidate' 이벤트가 발생할 때 호출되고, 새로운 ICE 후보를 다른 피어에 추가하는 기능을 한다.
   handleConnection = (event) => {
     const peerConnection = event.target;
     const iceCandidate = event.candidate;
@@ -39,7 +40,7 @@ class App extends Component {
         });
     }
   }
-
+// 사용자가 '녹화 시작' 버튼을 클릭할 때 호출되며, 오디오와 비디오 스트림을 요청하고, 성공적으로 스트림을 가져오면 로컬 비디오의 srcObject를 해당 스트림으로 설정하고 저장한다.
   handleStartClick = () => {
     this.setState({isStartDisabled: true});
     this.setState({isCallDisabled: false});
@@ -68,7 +69,7 @@ class App extends Component {
     this.setState({localStream: stream});
     this.localVideo.srcObject = this.state.localStream;
   }
-
+// 사용자가 의사와의 연결을 눌렀을 때 호출되며 피어 연결을 초기화하고 로컬 스트림을 로컬 피어에 추가한 다음 피어 연결에 대한 제안을 생성하는 기능을 한다.
   handleCallClick = () => {
     this.setState({isCallDisabled: true});
     this.setState({isHangUpDisabled: false});
@@ -84,7 +85,7 @@ class App extends Component {
     this.localPeer.createOffer(offerOptions)
     .then(this.createdOffer).catch(this.setSessionDescriptionError);
   }
-
+// 제안이 성공적으로 호출 된 경우에 호출되며, 로컬 피어와 원격피어의 세션 설명을 설정하고 원격 피어에 대한 응답을 생성한다.
   createdOffer = (description) => {
     this.localPeer.setLocalDescription(description);
     this.remotePeer.setRemoteDescription(description);
@@ -93,7 +94,7 @@ class App extends Component {
       .then(this.createdAnswer)
       .catch(this.setSessionDescriptionError);
   }
-
+// 원격피어가 응답을 성공적으로 생성한 후에 호출된다. 원격 피어와 로컬 피어의 세션 설명을 설정한다.
   createdAnswer = (description) => {
     this.remotePeer.setLocalDescription(description);
     this.localPeer.setRemoteDescription(description);
@@ -106,7 +107,7 @@ class App extends Component {
   getOtherPeer(pc) {
     return (pc === this.localPeer) ? this.remotePeer : this.localPeer;
   }
-
+// 사용자가 연결 종료를 눌렀을 때 호출되며 피어 연결을 종료하고 로컬 스트림이 있는 경우에 해당 스트림을 종료한다. 또한 녹화된 비디오를 mp4형식의 **blob**으로 다운로드 링크를 생성하고 폼 데이터에 추가해줌
   handleStopClick = () => {
     this.localPeer.close();
     this.remotePeer.close();
